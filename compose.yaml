@@ -1,0 +1,19 @@
+services:
+  flower-power:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flower-power:local
+    container_name: flower-power
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4173
+      PUBLIC_URL: "${PUBLIC_URL:-}"
+    ports:
+      - "${FLOWER_POWER_PORT:-4173}:4173"
+    volumes:
+      - flower-power-uploads:/app/uploads
+
+volumes:
+  flower-power-uploads:
