@@ -1,0 +1,1 @@
+{"scripts":{"dev":"node server.js","test":"node --check src/main.js && node --check server.js"},"private":true,"type":"module"}
