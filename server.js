@@ -6,7 +6,24 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('.', import.meta.url));
 const uploadDirectory = join(root, 'uploads');
 const port = Number(process.env.PORT || 4173);
-const publicUrl = process.env.PUBLIC_URL || '';
+function normalizePublicUrl(value) {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const withProtocol = /^[a-z][a-z\d+.-]*:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  try {
+    const url = new URL(withProtocol);
+    if (!['http:', 'https:'].includes(url.protocol)) return '';
+    url.hash = '';
+    url.search = '';
+    if (!url.pathname.endsWith('/')) url.pathname += '/';
+    return url.href;
+  } catch {
+    console.warn(`Ignoring invalid PUBLIC_URL: ${value}`);
+    return '';
+  }
+}
+
+const publicUrl = normalizePublicUrl(process.env.PUBLIC_URL || '');
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
@@ -65,7 +82,7 @@ async function serveFile(response, requestPath) {
 }
 
 createServer(async (request, response) => {
-  const url = new URL(request.url, `http://${request.headers.host}`);
+  const url = new URL(request.url, 'http://localhost');
   if (request.method === 'GET' && url.pathname === '/api/config') {
     send(response, 200, JSON.stringify({ publicUrl }));
     return;
