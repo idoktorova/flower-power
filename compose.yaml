@@ -10,10 +10,13 @@ services:
       NODE_ENV: production
       PORT: 4173
       PUBLIC_URL: "${PUBLIC_URL:-}"
+      DATA_DIR: /app/data
     ports:
       - "${FLOWER_POWER_PORT:-4173}:4173"
     volumes:
       - flower-power-uploads:/app/uploads
+      - flower-power-data:/app/data
 
 volumes:
   flower-power-uploads:
+  flower-power-data:
