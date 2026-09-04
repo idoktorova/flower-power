@@ -1,10 +1,12 @@
 import { createServer } from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const uploadDirectory = join(root, 'uploads');
+const dataDirectory = process.env.DATA_DIR || join(root, 'data');
 const port = Number(process.env.PORT || 4173);
 function normalizePublicUrl(value) {
   const trimmed = value.trim();
@@ -34,6 +36,16 @@ const mimeTypes = {
 };
 
 await mkdir(uploadDirectory, { recursive: true });
+await mkdir(dataDirectory, { recursive: true });
+const database = new DatabaseSync(join(dataDirectory, 'flower-power.sqlite'));
+database.exec(`CREATE TABLE IF NOT EXISTS app_state (
+  id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+)`);
+const readState = database.prepare('SELECT payload FROM app_state WHERE id = 1');
+const writeState = database.prepare(`INSERT INTO app_state (id, payload, updated_at)
+  VALUES (1, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET
+  payload = excluded.payload, updated_at = CURRENT_TIMESTAMP`);
 
 function send(response, status, body, contentType = 'application/json; charset=utf-8') {
   response.writeHead(status, { 'Content-Type': contentType });
@@ -65,6 +77,22 @@ async function savePlantPhoto(request, response, plantId) {
   }
 }
 
+async function saveData(request, response) {
+  let body = '';
+  try {
+    for await (const chunk of request) {
+      body += chunk;
+      if (body.length > 10_000_000) throw new Error('too-large');
+    }
+    const payload = JSON.parse(body);
+    if (!payload || !Array.isArray(payload.types) || !Array.isArray(payload.plants)) throw new Error('invalid');
+    writeState.run(JSON.stringify({ types: payload.types, plants: payload.plants }));
+    send(response, 204, '');
+  } catch (error) {
+    send(response, error.message === 'too-large' ? 413 : 400, JSON.stringify({ error: 'Invalid data payload' }));
+  }
+}
+
 async function serveFile(response, requestPath) {
   const relativePath = requestPath === '/' ? 'index.html' : requestPath.replace(/^\//, '');
   const filePath = normalize(join(root, relativePath));
@@ -85,6 +113,15 @@ createServer(async (request, response) => {
   const url = new URL(request.url, 'http://localhost');
   if (request.method === 'GET' && url.pathname === '/api/config') {
     send(response, 200, JSON.stringify({ publicUrl }));
+    return;
+  }
+  if (request.method === 'GET' && url.pathname === '/api/data') {
+    const row = readState.get();
+    send(response, 200, row ? row.payload : 'null');
+    return;
+  }
+  if (request.method === 'PUT' && url.pathname === '/api/data') {
+    await saveData(request, response);
     return;
   }
   const photoRoute = /^\/api\/plants\/([^/]+)\/photo$/.exec(url.pathname);

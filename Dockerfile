@@ -6,11 +6,12 @@ COPY package.json ./
 COPY index.html server.js ./
 COPY src ./src
 
-RUN mkdir -p /app/uploads && chown -R node:node /app
+RUN mkdir -p /app/uploads /app/data && chown -R node:node /app
 
 ENV NODE_ENV=production
 ENV PORT=4173
 ENV PUBLIC_URL=""
+ENV DATA_DIR=/app/data
 
 USER node
 
