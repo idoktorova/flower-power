@@ -20,3 +20,13 @@ test('falls back to a shorter target when plant data exceeds QR capacity', () =>
 
   assert.match(image, /^data:image\/svg\+xml;charset=utf-8,/);
 });
+
+test('produces a valid SVG payload suitable for downloading as an SVG file', () => {
+  const image = createQrDataUrl(['https://plants.example.com/#plant/example']);
+  const svg = decodeURIComponent(image.slice(image.indexOf(',') + 1));
+
+  assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+  assert.match(svg, /<path fill="#fffdf7"/);
+  assert.match(svg, /<path fill="#173d2a"/);
+  assert.match(svg, /<\/svg>$/);
+});
