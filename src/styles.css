@@ -27,3 +27,25 @@
 .photo-viewer .close{position:fixed;color:#fff;font-size:36px}
 .photo-viewer .photo-prev,.photo-viewer .photo-next{position:fixed;top:50%;transform:translateY(-50%);width:54px;height:72px;border:0;border-radius:14px;background:#fff2;color:#fff;font-size:52px;line-height:1}.photo-viewer .photo-prev{left:24px}.photo-viewer .photo-next{right:24px}.photo-count{position:fixed;bottom:18px;padding:7px 12px;border-radius:99px;background:#071b12aa;color:#fff;font-size:13px}
 @media(max-width:700px){.client-actions{grid-template-columns:1fr}.gallery-item>button:last-child{opacity:1}.photo-viewer{padding:40px 12px}}
+
+/* Readable QR controls and fertilizer details on plant cards. */
+.card-qr{flex:none;width:104px;margin:0;padding:6px;border:1px solid #dbe3d7;border-radius:12px;background:#fff;text-align:center;color:#718076}
+.card-qr img{display:block;width:90px;height:90px}
+.card-qr span{display:block;margin-top:3px;font-size:9px;letter-spacing:.12em}
+.profile-qr{display:inline-flex;align-items:center;gap:12px;margin:0 12px 0 0;padding:9px;border:1px solid #cbd8c8;border-radius:14px;background:#fff;color:#315c3c;text-align:left}
+.profile-qr img{width:148px;height:148px}
+.profile-qr span{max-width:100px;font-size:12px}
+.card-qr img,.profile-qr img,.qr-dialog #qr{image-rendering:pixelated}
+.qr-dialog #qr{width:min(360px,100%);height:auto;aspect-ratio:1}
+.card-fertilizers{margin-top:14px;padding-top:12px;border-top:1px solid #edf0e9}
+.card-fertilizers>span{color:#3d704a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.card-fertilizers ul,.fertilizers ul{list-style:none;padding:0;margin:9px 0 0}
+.card-fertilizers li{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-size:12px}
+.card-fertilizers li span{color:#718076;text-align:right}
+.fertilizers{background:#fff;border-radius:20px;padding:26px;margin-top:18px}
+.fertilizers h2{font:600 25px 'Playfair Display';margin:0}
+.fertilizers ul{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
+.fertilizers li{padding:16px;border:1px solid #e3e9df;border-radius:14px;background:#fffdf8}
+.fertilizers li strong,.fertilizers li span{display:block}
+.fertilizers li span{margin-top:6px;color:#52675a;font-size:14px}
+@media(max-width:700px){.fertilizers ul{grid-template-columns:1fr}.profile-qr img{width:128px;height:128px}}

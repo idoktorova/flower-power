@@ -76,6 +76,14 @@ function pestTable(type) {
   return `<section class="pests"><h2>${t('pests')}</h2><div class="table-wrap"><table><thead><tr><th>${t('insect')}</th><th>${t('treatment')}</th></tr></thead><tbody>${type.pests.map(pest => `<tr><td>${esc(pest.insect)}</td><td>${esc(pest.treatment)}</td></tr>`).join('')}</tbody></table></div></section>`;
 }
 
+function fertilizerList(type, compact = false) {
+  if (!type?.fertilizers?.length) return '';
+  const items = type.fertilizers.map(item => `<li><strong>${esc(item.name || '—')}</strong>${item.dosage ? `<span>${esc(item.dosage)}</span>` : ''}</li>`).join('');
+  return compact
+    ? `<div class="card-fertilizers"><span>🧪 ${t('fertilizers')}</span><ul>${items}</ul></div>`
+    : `<section class="fertilizers"><h2>${t('fertilizers')}</h2><ul>${items}</ul></section>`;
+}
+
 function wateringReminder(plant) {
   return calculateWateringReminder(plant.events);
 }
@@ -94,7 +102,7 @@ function formatDate(value) {
 
 function dashboard() {
   const types = data.types.map(type => `<article class="type-card"><div class="plant-icon">${icon}</div><div><h3>${esc(type.name)}</h3><p>${esc(careSummary(type))}</p></div><div class="actions"><button data-edit-type="${type.id}">${t('edit')}</button><button aria-label="${t('delete')}" data-del-type="${type.id}">×</button></div></article>`).join('') || `<div class="empty">${t('emptyTypes')}</div>`;
-  const plants = data.plants.map(plant => {const type = data.types.find(item => item.id === plant.typeId); const cover = plant.photos?.at(-1); return `<article class="plant-card" data-plant-link="${plant.id}" tabindex="0" role="link"><button class="delete-button" data-del-plant="${plant.id}" aria-label="${t('delete')}" title="${t('delete')}">×</button>${cover ? `<img src="${esc(cover)}" alt="${esc(plant.name)}">` : `<div class="placeholder">${icon}</div>`}<div class="plant-body"><div class="card-heading"><div><span class="tag">${esc(type?.name || '—')}</span><h3>${esc(plant.name)}</h3></div><figure class="card-qr"><img src="${qrUrl(plant.id)}" alt="${t('qr')}"><figcaption>QR</figcaption></figure></div><p>${t('bought')}: ${formatDate(plant.bought)} · ${plant.photos?.length || 0} 📷</p>${reminderHTML(plant, true)}</div></article>`}).join('') || `<div class="empty">${t('emptyPlants')}</div>`;
+  const plants = data.plants.map(plant => {const type = data.types.find(item => item.id === plant.typeId); const cover = plant.photos?.at(-1); return `<article class="plant-card" data-plant-link="${plant.id}" tabindex="0" role="link"><button class="delete-button" data-del-plant="${plant.id}" aria-label="${t('delete')}" title="${t('delete')}">×</button>${cover ? `<img src="${esc(cover)}" alt="${esc(plant.name)}">` : `<div class="placeholder">${icon}</div>`}<div class="plant-body"><div class="card-heading"><div><span class="tag">${esc(type?.name || '—')}</span><h3>${esc(plant.name)}</h3></div><button class="card-qr" data-qr="${plant.id}" aria-label="${t('qr')}" title="${t('qr')}"><img src="${qrUrl(plant.id)}" alt=""><span>QR</span></button></div><p>${t('bought')}: ${formatDate(plant.bought)} · ${plant.photos?.length || 0} 📷</p>${fertilizerList(type, true)}${reminderHTML(plant, true)}</div></article>`}).join('') || `<div class="empty">${t('emptyPlants')}</div>`;
   return shell(`<section class="hero"><div><span class="eyebrow">PLANT CARE STUDIO</span><h1>${t('brand')}</h1><p>${t('subtitle')}</p></div><div class="hero-leaves">${icon}</div></section><section><div class="section-head"><div><span>01</span><h2>${t('types')}</h2></div><div class="head-actions"><button class="secondary" data-open="json">{ } JSON</button><button class="primary" data-open="type">＋ ${t('newType')}</button></div></div><div class="types-grid">${types}</div></section><section><div class="section-head"><div><span>02</span><h2>${t('plants')}</h2></div><button class="primary" data-open="plant">＋ ${t('newPlant')}</button></div><div class="plants-grid">${plants}</div></section>${modalHTML()}`);
 }
 
@@ -105,7 +113,7 @@ function clientPage(id) {
   const events = [...(plant.events || [])].reverse().map(event => `<li><i class="${event.kind}"></i><span>${event.kind === 'water' ? t('water') : `${t('fertilize')}${event.details ? ` · ${esc(event.details)}` : ''}`}</span><time>${new Date(event.date).toLocaleString(lang)}</time></li>`).join('') || `<p>${t('never')}</p>`;
   const cover = plant.photos?.at(-1);
   const gallery = plant.photos?.map((photo,index) => `<figure class="gallery-item${index === plant.photos.length - 1 ? ' current' : ''}"><button class="photo-open" data-photo="${index}" aria-label="${t('openPhoto')}"><img src="${esc(photo)}" alt="${esc(plant.name)} ${index + 1}" loading="lazy"></button><button data-remove-photo="${index}" aria-label="${t('removePhoto')}" title="${t('removePhoto')}">×</button></figure>`).join('') || `<div class="empty">${t('emptyGallery')}</div>`;
-  return shell(`<a class="back" href="#">← ${t('back')}</a><article class="profile"><div class="profile-media">${cover ? `<button class="profile-photo" data-photo="${plant.photos.length - 1}" aria-label="${t('openPhoto')}"><img src="${esc(cover)}" alt="${esc(plant.name)}"></button>` : `<div class="profile-photo">${icon}</div>`}<div class="profile-gallery"><div class="gallery-head"><span>${t('gallery')}</span><span>${plant.photos?.length || 0} 📷</span></div><div class="gallery-grid">${gallery}</div></div></div><div class="profile-title"><span class="tag">${esc(type?.name || '—')}</span><h1>${esc(plant.name)}</h1><p>${t('bought')}: ${formatDate(plant.bought)}</p><figure class="profile-qr"><img src="${qrUrl(plant.id)}" alt="${t('qr')}"><figcaption>${t('qr')}</figcaption></figure><label class="camera-button">📷 ${t('takePhoto')}<input data-camera type="file" accept="image/*" multiple></label></div></article>${reminderHTML(plant)}<div class="client-actions"><button class="water" data-event="water">💧<span>${t('water')}</span></button><button class="feed" data-event="feed">✦<span>${t('fertilize')}</span></button></div><section class="care-info"><h2>${t('care')}</h2><div class="care-grid">${careCards(type)}</div></section>${pestTable(type)}<section class="history"><h2>${t('lastCare')}</h2><ul>${events}</ul></section>${modalHTML()}`, true);
+  return shell(`<a class="back" href="#">← ${t('back')}</a><article class="profile"><div class="profile-media">${cover ? `<button class="profile-photo" data-photo="${plant.photos.length - 1}" aria-label="${t('openPhoto')}"><img src="${esc(cover)}" alt="${esc(plant.name)}"></button>` : `<div class="profile-photo">${icon}</div>`}<div class="profile-gallery"><div class="gallery-head"><span>${t('gallery')}</span><span>${plant.photos?.length || 0} 📷</span></div><div class="gallery-grid">${gallery}</div></div></div><div class="profile-title"><span class="tag">${esc(type?.name || '—')}</span><h1>${esc(plant.name)}</h1><p>${t('bought')}: ${formatDate(plant.bought)}</p><button class="profile-qr" data-qr="${plant.id}" aria-label="${t('qr')}" title="${t('qr')}"><img src="${qrUrl(plant.id)}" alt=""><span>${t('qr')}</span></button><label class="camera-button">📷 ${t('takePhoto')}<input data-camera type="file" accept="image/*" multiple></label></div></article>${reminderHTML(plant)}<div class="client-actions"><button class="water" data-event="water">💧<span>${t('water')}</span></button><button class="feed" data-event="feed">✦<span>${t('fertilize')}</span></button></div><section class="care-info"><h2>${t('care')}</h2><div class="care-grid">${careCards(type)}</div></section>${fertilizerList(type)}${pestTable(type)}<section class="history"><h2>${t('lastCare')}</h2><ul>${events}</ul></section>${modalHTML()}`, true);
 }
 
 function modalHTML() {
@@ -153,7 +161,10 @@ function qrUrl(id) {
   const plainTarget = `${base}#plant/${id}`;
   const fullTarget = `${plainTarget}?data=${encodePayload({plant:{...plant,photos:[],events:[]},type})}`;
   const compactTarget = `${plainTarget}?data=${encodePayload(compactQrPayload(plant, type))}`;
-  if (!qrCache.has(fullTarget)) qrCache.set(fullTarget, createQrDataUrl([fullTarget, compactTarget, plainTarget]));
+  // A configured deployment can load its data from the server, so keep its QR
+  // deliberately short and low-density. Static hosting still embeds a fallback.
+  const targets = configured ? [plainTarget] : [fullTarget, compactTarget, plainTarget];
+  if (!qrCache.has(fullTarget)) qrCache.set(fullTarget, createQrDataUrl(targets));
   return qrCache.get(fullTarget);
 }
 function encodePayload(value) {let bytes = new TextEncoder().encode(JSON.stringify(value)), binary = ''; bytes.forEach(byte => binary += String.fromCharCode(byte)); return btoa(binary).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');}
