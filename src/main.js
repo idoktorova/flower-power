@@ -1,5 +1,5 @@
 import { calculateWateringReminder } from './reminders.js';
-import { QRCode, QRErrorCorrectLevel } from './qrcode.js';
+import { createQrDataUrl } from './qr-image.js';
 
 const CARE_GROUPS = [
   ['lightClimate', 'groupLightClimate', [['lighting', 'careLighting', '☀️'], ['temperature', 'careTemperature', '🌡️'], ['humidity', 'careHumidity', '🌫️']]],
@@ -127,40 +127,34 @@ function fertilizerRow(item = {}) {return `<div class="pest-row"><input name="fe
 
 const qrCache = new Map();
 
+function compactQrPayload(plant, type) {
+  const care = Object.fromEntries(CARE_FIELDS.flatMap(([key]) => {
+    const value = String(type?.care?.[key] || '').trim();
+    return value ? [[key, value.slice(0, 80)]] : [];
+  }));
+  return {
+    plant: {id:plant.id,name:String(plant.name || '').slice(0, 80),typeId:plant.typeId,bought:plant.bought,photos:[],events:[]},
+    type: type ? {id:type.id,name:String(type.name || '').slice(0, 80),care} : undefined,
+  };
+}
+
 function qrUrl(id) {
   const plant = data.plants.find(item => item.id === id);
   const type = data.types.find(item => item.id === plant?.typeId);
-  const payload = encodePayload({plant:{...plant,photos:[],events:[]},type});
   const configured = String(runtimeConfig.publicUrl || '').trim();
   const candidate = configured && !/^[a-z][a-z\d+.-]*:\/\//i.test(configured) ? `http://${configured}` : configured;
   let base;
-  try {base = new URL(candidate || location.href, location.href).href.split('#')[0];} catch {base = location.href.split('#')[0];}
-  const target = `${base}#plant/${id}?data=${payload}`;
-  if (!qrCache.has(target)) qrCache.set(target, createQrDataUrl(target));
-  return qrCache.get(target);
-}
-
-function createQrDataUrl(value) {
-  const qr = new QRCode(0, QRErrorCorrectLevel.L);
-  qr.addData(value);
-  qr.make();
-  const border = 4;
-  const count = qr.getModuleCount();
-  const paths = [];
-  for (let row = 0; row < count; row++) {
-    let start = -1;
-    for (let column = 0; column <= count; column++) {
-      const dark = column < count && qr.isDark(row, column);
-      if (dark && start < 0) start = column;
-      if (!dark && start >= 0) {
-        paths.push(`M${start + border} ${row + border}h${column - start}v1H${start + border}z`);
-        start = -1;
-      }
-    }
-  }
-  const size = count + border * 2;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges"><path fill="#fffdf7" d="M0 0h${size}v${size}H0z"/><path fill="#173d2a" d="${paths.join('')}"/></svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  try {
+    const url = new URL(candidate || location.href, location.href);
+    url.hash = '';
+    url.search = '';
+    base = url.href;
+  } catch {base = location.href.split(/[?#]/)[0];}
+  const plainTarget = `${base}#plant/${id}`;
+  const fullTarget = `${plainTarget}?data=${encodePayload({plant:{...plant,photos:[],events:[]},type})}`;
+  const compactTarget = `${plainTarget}?data=${encodePayload(compactQrPayload(plant, type))}`;
+  if (!qrCache.has(fullTarget)) qrCache.set(fullTarget, createQrDataUrl([fullTarget, compactTarget, plainTarget]));
+  return qrCache.get(fullTarget);
 }
 function encodePayload(value) {let bytes = new TextEncoder().encode(JSON.stringify(value)), binary = ''; bytes.forEach(byte => binary += String.fromCharCode(byte)); return btoa(binary).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');}
 function route() {const match = location.hash.match(/^#plant\/([^?]+)(?:\?data=(.+))?$/); if (!match) return null; if (match[2] && !data.plants.some(item => item.id === match[1])) try {const binary = atob(match[2].replaceAll('-','+').replaceAll('_','/')); const bytes = Uint8Array.from(binary,char => char.charCodeAt(0)); const payload = JSON.parse(new TextDecoder().decode(bytes)); if (payload.type && !data.types.some(item => item.id === payload.type.id)) data.types.push(payload.type); if (payload.plant) data.plants.push(payload.plant); normalizeData();} catch {} return match[1];}
