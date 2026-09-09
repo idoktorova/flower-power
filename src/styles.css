@@ -11,3 +11,19 @@
 @media(max-width:700px){.profile-media{width:120px}.profile-photo{width:120px;height:120px;padding:24px}.profile-title{padding-top:5px}.profile-gallery .gallery-grid{grid-template-columns:repeat(2,1fr)}}
 .card-buttons{flex-wrap:wrap}.card-buttons .delete-button{flex-basis:100%;border-color:#ead7d0;color:#934c3c;background:#fff8f5}
 .watering-reminder{display:flex;align-items:center;gap:13px;margin:18px 0 0;padding:15px 18px;border:1px solid #a9cfce;border-radius:16px;background:#e4f2f1;color:#214f4d}.watering-reminder>span{font-size:25px}.watering-reminder strong,.watering-reminder small{display:block}.watering-reminder small{margin-top:3px;color:#557876}.watering-reminder.compact{margin:14px 0;padding:11px 13px;border-radius:12px}.watering-reminder.compact>span{font-size:20px}.watering-reminder.compact strong{font-size:13px}.watering-reminder.compact small{font-size:11px}
+
+/* Interactive plant cards, in-card actions and full-size gallery viewer */
+.plant-card{cursor:pointer;transition:transform .2s,box-shadow .2s}
+.plant-card:hover,.plant-card:focus-visible{transform:translateY(-3px);box-shadow:0 16px 34px #173d2a18;outline:2px solid #8eb399;outline-offset:3px}
+.card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.card-qr{flex:none;width:64px;margin:0;text-align:center}.card-qr img{display:block;width:64px;height:64px;border:1px solid #dbe3d7;border-radius:10px}.card-qr figcaption{margin-top:3px;color:#718076;font-size:9px;letter-spacing:.12em}
+.profile-qr{display:inline-flex;align-items:center;gap:10px;margin:0 12px 0 0;padding:7px;border:1px solid #cbd8c8;border-radius:12px;background:#fff}.profile-qr img{width:68px;height:68px;border-radius:6px}.profile-qr figcaption{max-width:90px;color:#315c3c;font-size:11px}
+.client-actions{grid-template-columns:repeat(2,1fr)}
+.gallery-item .photo-open{position:static;width:100%;height:100%;padding:0;border:0;border-radius:0;background:none;opacity:1}
+.gallery-item>button:last-child{position:absolute;right:7px;top:7px;width:30px;height:30px;border:0;border-radius:50%;background:#173d2add;color:#fff;font-size:19px;opacity:0;transition:opacity .2s}
+.gallery-item:hover>button:last-child,.gallery-item:focus-within>button:last-child{opacity:1}
+.photo-viewer{padding:50px}
+.photo-viewer img{max-width:100%;max-height:calc(100vh - 80px);object-fit:contain;border-radius:16px;box-shadow:0 20px 60px #0008}
+.photo-viewer .close{position:fixed;color:#fff;font-size:36px}
+.photo-viewer .photo-prev,.photo-viewer .photo-next{position:fixed;top:50%;transform:translateY(-50%);width:54px;height:72px;border:0;border-radius:14px;background:#fff2;color:#fff;font-size:52px;line-height:1}.photo-viewer .photo-prev{left:24px}.photo-viewer .photo-next{right:24px}.photo-count{position:fixed;bottom:18px;padding:7px 12px;border-radius:99px;background:#071b12aa;color:#fff;font-size:13px}
+@media(max-width:700px){.client-actions{grid-template-columns:1fr}.gallery-item>button:last-child{opacity:1}.photo-viewer{padding:40px 12px}}
