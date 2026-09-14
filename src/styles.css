@@ -37,6 +37,7 @@
 .profile-qr span{max-width:100px;font-size:12px}
 .card-qr img,.profile-qr img,.qr-dialog #qr{image-rendering:pixelated}
 .qr-dialog #qr{width:min(360px,100%);height:auto;aspect-ratio:1}
+.print-hint{margin:12px 0;color:#718076;font-size:12px;line-height:1.45}.qr-actions{display:flex;justify-content:center;gap:10px}.qr-actions .download{box-shadow:none}.print-frame{position:fixed;width:1px;height:1px;right:0;bottom:0;border:0;opacity:0;pointer-events:none}
 .card-fertilizers{margin-top:14px;padding-top:12px;border-top:1px solid #edf0e9}
 .card-fertilizers>span{color:#3d704a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 .card-fertilizers ul,.fertilizers ul{list-style:none;padding:0;margin:9px 0 0}
