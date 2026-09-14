@@ -26,7 +26,7 @@ test('produces a valid SVG payload suitable for downloading as an SVG file', () 
   const svg = decodeURIComponent(image.slice(image.indexOf(',') + 1));
 
   assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
-  assert.match(svg, /<path fill="#fffdf7"/);
-  assert.match(svg, /<path fill="#173d2a"/);
+  assert.match(svg, /<path fill="#fff"/);
+  assert.match(svg, /<path fill="#000"/);
   assert.match(svg, /<\/svg>$/);
 });
