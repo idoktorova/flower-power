@@ -20,9 +20,9 @@ Object.assign(I18N.sr, {groupLightClimate:'Svetlo i mikroklima',groupWatering:'Z
 Object.assign(I18N.en, {fertilizers:'Fertilizers & dosages',fertilizerName:'Fertilizer name',dosage:'Dosage',addFertilizer:'Add fertilizer',chooseFertilizer:'Choose a fertilizer',noFertilizers:'Add a fertilizer to the plant type first',openPhoto:'Open photo'});
 Object.assign(I18N.sr, {fertilizers:'Đubriva i doziranje',fertilizerName:'Naziv đubriva',dosage:'Doziranje',addFertilizer:'Dodaj đubrivo',chooseFertilizer:'Izaberite đubrivo',noFertilizers:'Prvo dodajte đubrivo vrsti biljke',openPhoto:'Otvori fotografiju'});
 Object.assign(I18N.ru, {openPhoto:'Открыть фотографию'});
-Object.assign(I18N.ru, {printLabel:'Печать QR',printHint:'На печать передаётся только квадрат QR-кода 21 × 21 мм, без макета этикетки и полей.',print:'Печатать'});
-Object.assign(I18N.en, {printLabel:'Print QR',printHint:'Only the 21 × 21 mm QR square is sent to print, without a label layout or margins.',print:'Print'});
-Object.assign(I18N.sr, {printLabel:'Štampaj QR',printHint:'Šalje se samo QR kvadrat 21 × 21 mm, bez rasporeda etikete i margina.',print:'Štampaj'});
+Object.assign(I18N.ru, {printLabel:'Печать QR',printHint:'На печать передаётся только QR 21 × 21 мм с разрешением 203 dpi (168 × 168 точек), без макета и полей.',print:'Печатать'});
+Object.assign(I18N.en, {printLabel:'Print QR',printHint:'Only the 21 × 21 mm QR at 203 dpi (168 × 168 dots) is sent to print, without layout or margins.',print:'Print'});
+Object.assign(I18N.sr, {printLabel:'Štampaj QR',printHint:'Šalje se samo QR 21 × 21 mm pri 203 dpi (168 × 168 tačaka), bez rasporeda i margina.',print:'Štampaj'});
 
 const runtimeConfig = await fetch('./api/config').then(response => response.ok ? response.json() : {}).catch(() => ({}));
 const seed = {types:[{id:'t1',name:'Монстера',care:{lighting:'Яркий рассеянный свет, без прямого полуденного солнца.',wateringSummer:'Поливать после просыхания верхних 3–5 см почвы.',wateringWinter:'Сократить полив, давая почве просохнуть глубже.',humidity:'50–70%, протирать листья.',fertilizer:'Комплексное удобрение для декоративно-лиственных с марта по сентябрь.',dosage:'½ дозы от указанной на упаковке, раз в 2–4 недели.',temperature:'18–28 °C, беречь от сквозняков.',soil:'Рыхлый грунт с дренажем; пересадка весной по мере заполнения горшка.'}}],plants:[{id:'p1',name:'Моника',typeId:'t1',bought:'2026-05-18',photos:[],events:[{kind:'water',date:new Date(Date.now()-864e5).toISOString()}]}]};

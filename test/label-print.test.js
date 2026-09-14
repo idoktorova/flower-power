@@ -9,6 +9,8 @@ test('sends only a cropped 21 x 21 mm QR square to print', () => {
 
   assert.match(document, /@page \{ size: 21mm 21mm; margin: 0; \}/);
   assert.match(document, /html, body \{ width: 21mm; height: 21mm;/);
+  assert.match(document, /image-resolution: 203dpi/);
+  assert.match(document, /width="168" height="168"/);
   assert.match(document, /<body><img [^>]+><\/body>/);
   assert.doesNotMatch(document, /<article|<strong>|<span>/);
 });
