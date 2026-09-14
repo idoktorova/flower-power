@@ -20,9 +20,9 @@ Object.assign(I18N.sr, {groupLightClimate:'Svetlo i mikroklima',groupWatering:'Z
 Object.assign(I18N.en, {fertilizers:'Fertilizers & dosages',fertilizerName:'Fertilizer name',dosage:'Dosage',addFertilizer:'Add fertilizer',chooseFertilizer:'Choose a fertilizer',noFertilizers:'Add a fertilizer to the plant type first',openPhoto:'Open photo'});
 Object.assign(I18N.sr, {fertilizers:'Đubriva i doziranje',fertilizerName:'Naziv đubriva',dosage:'Doziranje',addFertilizer:'Dodaj đubrivo',chooseFertilizer:'Izaberite đubrivo',noFertilizers:'Prvo dodajte đubrivo vrsti biljke',openPhoto:'Otvori fotografiju'});
 Object.assign(I18N.ru, {openPhoto:'Открыть фотографию'});
-Object.assign(I18N.ru, {printLabel:'Печать этикетки',labelSize:'Размер этикетки',copies:'Количество',printHint:'В диалоге печати выберите принтер AIYIN, масштаб 100% и поля «Нет».',print:'Печатать'});
-Object.assign(I18N.en, {printLabel:'Print label',labelSize:'Label size',copies:'Copies',printHint:'In the print dialog select the AIYIN printer, 100% scale and no margins.',print:'Print'});
-Object.assign(I18N.sr, {printLabel:'Štampaj etiketu',labelSize:'Veličina etikete',copies:'Broj kopija',printHint:'U dijalogu izaberite AIYIN štampač, razmeru 100% i bez margina.',print:'Štampaj'});
+Object.assign(I18N.ru, {printLabel:'Печать этикетки',copies:'Количество',printHint:'Этикетка 45 × 25 мм. Выберите принтер AIYIN, масштаб 100% и поля «Нет» — поворот уже учтён автоматически.',print:'Печатать'});
+Object.assign(I18N.en, {printLabel:'Print label',copies:'Copies',printHint:'45 × 25 mm label. Select AIYIN, 100% scale and no margins — rotation is handled automatically.',print:'Print'});
+Object.assign(I18N.sr, {printLabel:'Štampaj etiketu',copies:'Broj kopija',printHint:'Etiketa 45 × 25 mm. Izaberite AIYIN, razmeru 100% i bez margina — rotacija je automatska.',print:'Štampaj'});
 
 const runtimeConfig = await fetch('./api/config').then(response => response.ok ? response.json() : {}).catch(() => ({}));
 const seed = {types:[{id:'t1',name:'Монстера',care:{lighting:'Яркий рассеянный свет, без прямого полуденного солнца.',wateringSummer:'Поливать после просыхания верхних 3–5 см почвы.',wateringWinter:'Сократить полив, давая почве просохнуть глубже.',humidity:'50–70%, протирать листья.',fertilizer:'Комплексное удобрение для декоративно-лиственных с марта по сентябрь.',dosage:'½ дозы от указанной на упаковке, раз в 2–4 недели.',temperature:'18–28 °C, беречь от сквозняков.',soil:'Рыхлый грунт с дренажем; пересадка весной по мере заполнения горшка.'}}],plants:[{id:'p1',name:'Моника',typeId:'t1',bought:'2026-05-18',photos:[],events:[{kind:'water',date:new Date(Date.now()-864e5).toISOString()}]}]};
@@ -122,7 +122,7 @@ function clientPage(id) {
 
 function modalHTML() {
   if (!modal) return '';
-  if (modal.kind === 'qr') {const plant = data.plants.find(item => item.id === modal.id); return `<div class="overlay"><div class="dialog qr-dialog"><button class="close">×</button><span class="tag">${t('qr')}</span><h2>${esc(plant.name)}</h2><img id="qr" src="${qrUrl(plant.id)}" alt="QR"><div class="label-options"><label>${t('labelSize')}<select data-label-size><option value="40x30">40 × 30 мм</option><option value="50x30" selected>50 × 30 мм</option><option value="50x50">50 × 50 мм</option><option value="58x40">58 × 40 мм</option></select></label><label>${t('copies')}<input data-label-copies type="number" min="1" max="50" value="1"></label></div><p class="print-hint">${t('printHint')}</p><div class="qr-actions"><a class="secondary download" href="${qrUrl(plant.id)}" download="plant-qr.svg">↓ ${t('download')}</a><button class="primary" data-print-label="${plant.id}">▣ ${t('print')}</button></div></div></div>`;}
+  if (modal.kind === 'qr') {const plant = data.plants.find(item => item.id === modal.id); return `<div class="overlay"><div class="dialog qr-dialog"><button class="close">×</button><span class="tag">${t('qr')}</span><h2>${esc(plant.name)}</h2><img id="qr" src="${qrUrl(plant.id)}" alt="QR"><div class="label-options"><label>${t('copies')}<input data-label-copies type="number" min="1" max="50" value="1"></label></div><p class="print-hint">${t('printHint')}</p><div class="qr-actions"><a class="secondary download" href="${qrUrl(plant.id)}" download="plant-qr.svg">↓ ${t('download')}</a><button class="primary" data-print-label="${plant.id}">▣ ${t('print')}</button></div></div></div>`;}
   if (modal.kind === 'photo') {const plant = data.plants.find(item => item.id === route()); const total = plant.photos.length; return `<div class="overlay photo-viewer" role="dialog" aria-modal="true"><button class="close" aria-label="${t('cancel')}">×</button>${total > 1 ? `<button class="photo-prev" data-photo-step="-1" aria-label="Previous">‹</button>` : ''}<img src="${esc(plant.photos[modal.index])}" alt="${esc(plant.name)} ${modal.index + 1}"><span class="photo-count">${modal.index + 1} / ${total}</span>${total > 1 ? `<button class="photo-next" data-photo-step="1" aria-label="Next">›</button>` : ''}</div>`;}
   if (modal.kind === 'feed') {const plant = data.plants.find(item => item.id === route()); const type = data.types.find(item => item.id === plant?.typeId); const options = type?.fertilizers || []; return `<div class="overlay"><form class="dialog" id="feed-editor"><button type="button" class="close">×</button><h2>${t('fertilize')}</h2>${options.length ? `<label>${t('chooseFertilizer')}<select name="fertilizer" required autofocus><option value="">—</option>${options.map(item => `<option value="${esc(`${item.name} · ${item.dosage}`)}">${esc(item.name)} — ${esc(item.dosage)}</option>`).join('')}</select></label>` : `<p class="empty">${t('noFertilizers')}</p>`}<div class="form-actions"><button type="button" class="secondary close">${t('cancel')}</button>${options.length ? `<button class="primary">${t('save')}</button>` : ''}</div></form></div>`;}
   if (modal.kind === 'json') return `<div class="overlay"><form class="dialog care-dialog" id="json-editor"><button type="button" class="close">×</button><h2>${t('jsonTools')}</h2><p class="form-hint">${t('jsonHint')}</p><textarea name="json" class="json-input" spellcheck="false">${esc(jsonDraft)}</textarea><div class="form-actions"><button type="button" class="secondary" data-copy-json>${t('copyJson')}</button><button class="primary">${t('importJson')}</button></div></form></div>`;
@@ -238,7 +238,6 @@ function bind() {
 
 function printLabel(event) {
   const plant = data.plants.find(item => item.id === event.currentTarget.dataset.printLabel);
-  const type = data.types.find(item => item.id === plant?.typeId);
   const frame = document.createElement('iframe');
   frame.className = 'print-frame';
   frame.setAttribute('title', t('printLabel'));
@@ -251,9 +250,6 @@ function printLabel(event) {
   frame.contentDocument.open();
   frame.contentDocument.write(createLabelPrintDocument({
     qrUrl: qrUrl(plant.id),
-    plantName: plant.name,
-    typeName: type?.name,
-    size: document.querySelector('[data-label-size]').value,
     copies: document.querySelector('[data-label-copies]').value,
   }));
   frame.contentDocument.close();
