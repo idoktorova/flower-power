@@ -1,6 +1,7 @@
 import { calculateWateringReminder } from './reminders.js';
 import { createQrDataUrl } from './qr-image.js';
 import { createLabelPrintDocument } from './label-print.js';
+import { buildCareCalendar, dateKey } from './care-calendar.js';
 
 const CARE_GROUPS = [
   ['lightClimate', 'groupLightClimate', [['lighting', 'careLighting', '☀️'], ['temperature', 'careTemperature', '🌡️'], ['humidity', 'careHumidity', '🌫️']]],
@@ -23,6 +24,12 @@ Object.assign(I18N.ru, {openPhoto:'Открыть фотографию'});
 Object.assign(I18N.ru, {printLabel:'Печать QR',printHint:'На печать передаётся только QR 21 × 21 мм с разрешением 203 dpi (168 × 168 точек), без макета и полей.',print:'Печатать'});
 Object.assign(I18N.en, {printLabel:'Print QR',printHint:'Only the 21 × 21 mm QR at 203 dpi (168 × 168 dots) is sent to print, without layout or margins.',print:'Print'});
 Object.assign(I18N.sr, {printLabel:'Štampaj QR',printHint:'Šalje se samo QR 21 × 21 mm pri 203 dpi (168 × 168 tačaka), bez rasporeda i margina.',print:'Štampaj'});
+Object.assign(I18N.ru, {calendarHint:'Календарь с даты покупки по сегодняшний день',weekdays:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],purchaseMark:'Покупка',today:'Сегодня'});
+Object.assign(I18N.en, {calendarHint:'Calendar from purchase through today',weekdays:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],purchaseMark:'Purchased',today:'Today'});
+Object.assign(I18N.sr, {calendarHint:'Kalendar od kupovine do danas',weekdays:['Pon','Uto','Sre','Čet','Pet','Sub','Ned'],purchaseMark:'Kupljeno',today:'Danas'});
+Object.assign(I18N.ru, {temperatureShort:'Температура',humidityShort:'Влажность',wateredAt:'Полив',fertilizedWith:'Удобрение',noData:'Нет данных'});
+Object.assign(I18N.en, {temperatureShort:'Temperature',humidityShort:'Humidity',wateredAt:'Watering',fertilizedWith:'Fertilizer',noData:'No data'});
+Object.assign(I18N.sr, {temperatureShort:'Temperatura',humidityShort:'Vlažnost',wateredAt:'Zalivanje',fertilizedWith:'Đubrivo',noData:'Nema podataka'});
 
 const runtimeConfig = await fetch('./api/config').then(response => response.ok ? response.json() : {}).catch(() => ({}));
 const seed = {types:[{id:'t1',name:'Монстера',care:{lighting:'Яркий рассеянный свет, без прямого полуденного солнца.',wateringSummer:'Поливать после просыхания верхних 3–5 см почвы.',wateringWinter:'Сократить полив, давая почве просохнуть глубже.',humidity:'50–70%, протирать листья.',fertilizer:'Комплексное удобрение для декоративно-лиственных с марта по сентябрь.',dosage:'½ дозы от указанной на упаковке, раз в 2–4 недели.',temperature:'18–28 °C, беречь от сквозняков.',soil:'Рыхлый грунт с дренажем; пересадка весной по мере заполнения горшка.'}}],plants:[{id:'p1',name:'Моника',typeId:'t1',bought:'2026-05-18',photos:[],events:[{kind:'water',date:new Date(Date.now()-864e5).toISOString()}]}]};
@@ -104,6 +111,30 @@ function formatDate(value) {
   return match ? `${match[3]}.${match[2]}.${match[1]}` : (value || '—');
 }
 
+function careCalendar(plant) {
+  const todayKey = dateKey(new Date());
+  const purchaseKey = String(plant.bought || '').slice(0, 10);
+  const locale = lang === 'sr' ? 'sr-Latn' : lang;
+  const months = buildCareCalendar(plant.bought, plant.events).reverse().map(month => {
+    const monthName = new Intl.DateTimeFormat(locale, {month:'long', year:'numeric'}).format(new Date(month.year, month.month, 1));
+    const leading = '<span class="calendar-spacer" aria-hidden="true"></span>'.repeat(month.days[0].weekday);
+    const days = month.days.map(item => {
+      const kinds = [...new Set(item.events.map(event => event.kind))];
+      const eventLabel = item.events.map(event => event.kind === 'water' ? t('water') : `${t('fertilize')}${event.details ? `: ${event.details}` : ''}`).join(', ');
+      const labels = [item.key === purchaseKey ? t('purchaseMark') : '', item.key === todayKey ? t('today') : '', eventLabel].filter(Boolean).join('. ');
+      const climate = [...(plant.climateReadings || []), ...item.events].filter(reading => String(reading.date || '').slice(0, 10) === item.key && (reading.temperature != null || reading.temp != null || reading.humidity != null)).at(-1) || {};
+      const temperature = climate.temperature ?? climate.temp;
+      const humidity = climate.humidity;
+      const waterTimes = item.events.filter(event => event.kind === 'water').map(event => new Intl.DateTimeFormat(locale, {hour:'2-digit',minute:'2-digit'}).format(new Date(event.date)));
+      const fertilizers = item.events.filter(event => event.kind === 'feed').map(event => event.details).filter(Boolean);
+      const popup = `<span class="day-popover" role="tooltip"><strong>${formatDate(item.key)}</strong><span><i>🌡️</i><em>${t('temperatureShort')}</em><b>${temperature != null ? `${esc(temperature)} °C` : t('noData')}</b></span><span><i>💧</i><em>${t('humidityShort')}</em><b>${humidity != null ? `${esc(humidity)}%` : t('noData')}</b></span><span><i>🕘</i><em>${t('wateredAt')}</em><b>${waterTimes.length ? esc(waterTimes.join(', ')) : t('noData')}</b></span><span><i>✦</i><em>${t('fertilizedWith')}</em><b>${fertilizers.length ? esc(fertilizers.join(', ')) : t('noData')}</b></span></span>`;
+      return `<span class="calendar-day${item.outsideRange ? ' outside' : ''}${item.key === todayKey ? ' today' : ''}${item.key === purchaseKey ? ' purchased' : ''}" tabindex="0" aria-label="${esc(`${formatDate(item.key)}${labels ? `. ${labels}` : ''}`)}"><b>${item.day}</b><span class="care-marks">${kinds.includes('water') ? '<i class="water" aria-hidden="true">💧</i>' : ''}${kinds.includes('feed') ? '<i class="feed" aria-hidden="true">✦</i>' : ''}</span>${popup}</span>`;
+    }).join('');
+    return `<article class="calendar-month"><h3>${esc(monthName)}</h3><div class="calendar-weekdays">${t('weekdays').map(day => `<span>${day}</span>`).join('')}</div><div class="calendar-days">${leading}${days}</div></article>`;
+  }).join('');
+  return `<section class="history care-calendar"><div class="calendar-title"><div><h2>${t('lastCare')}</h2><p>${t('calendarHint')}</p></div><div class="calendar-legend"><span><i class="water">💧</i>${t('water')}</span><span><i class="feed">✦</i>${t('fertilize')}</span></div></div><div class="calendar-months">${months}</div></section>`;
+}
+
 function dashboard() {
   const types = data.types.map(type => `<article class="type-card"><div class="plant-icon">${icon}</div><div><h3>${esc(type.name)}</h3><p>${esc(careSummary(type))}</p></div><div class="actions"><button data-edit-type="${type.id}">${t('edit')}</button><button aria-label="${t('delete')}" data-del-type="${type.id}">×</button></div></article>`).join('') || `<div class="empty">${t('emptyTypes')}</div>`;
   const plants = data.plants.map(plant => {const type = data.types.find(item => item.id === plant.typeId); const cover = plant.photos?.at(-1); return `<article class="plant-card" data-plant-link="${plant.id}" tabindex="0" role="link"><button class="delete-button" data-del-plant="${plant.id}" aria-label="${t('delete')}" title="${t('delete')}">×</button>${cover ? `<img src="${esc(cover)}" alt="${esc(plant.name)}">` : `<div class="placeholder">${icon}</div>`}<div class="plant-body"><div class="card-heading"><div><span class="tag">${esc(type?.name || '—')}</span><h3>${esc(plant.name)}</h3></div><button class="card-qr" data-qr="${plant.id}" aria-label="${t('qr')}" title="${t('qr')}"><img src="${qrUrl(plant.id)}" alt=""><span>QR</span></button></div><p>${t('bought')}: ${formatDate(plant.bought)} · ${plant.photos?.length || 0} 📷</p>${fertilizerList(type, true)}${reminderHTML(plant, true)}</div></article>`}).join('') || `<div class="empty">${t('emptyPlants')}</div>`;
@@ -114,10 +145,9 @@ function clientPage(id) {
   const plant = data.plants.find(item => item.id === id);
   if (!plant) return shell(`<div class="empty">Plant not found</div>`, true);
   const type = data.types.find(item => item.id === plant.typeId);
-  const events = [...(plant.events || [])].reverse().map(event => `<li><i class="${event.kind}"></i><span>${event.kind === 'water' ? t('water') : `${t('fertilize')}${event.details ? ` · ${esc(event.details)}` : ''}`}</span><time>${new Date(event.date).toLocaleString(lang)}</time></li>`).join('') || `<p>${t('never')}</p>`;
   const cover = plant.photos?.at(-1);
   const gallery = plant.photos?.map((photo,index) => `<figure class="gallery-item${index === plant.photos.length - 1 ? ' current' : ''}"><button class="photo-open" data-photo="${index}" aria-label="${t('openPhoto')}"><img src="${esc(photo)}" alt="${esc(plant.name)} ${index + 1}" loading="lazy"></button><button data-remove-photo="${index}" aria-label="${t('removePhoto')}" title="${t('removePhoto')}">×</button></figure>`).join('') || `<div class="empty">${t('emptyGallery')}</div>`;
-  return shell(`<a class="back" href="#">← ${t('back')}</a><article class="profile"><div class="profile-media">${cover ? `<button class="profile-photo" data-photo="${plant.photos.length - 1}" aria-label="${t('openPhoto')}"><img src="${esc(cover)}" alt="${esc(plant.name)}"></button>` : `<div class="profile-photo">${icon}</div>`}<div class="profile-gallery"><div class="gallery-head"><span>${t('gallery')}</span><span>${plant.photos?.length || 0} 📷</span></div><div class="gallery-grid">${gallery}</div></div></div><div class="profile-title"><span class="tag">${esc(type?.name || '—')}</span><h1>${esc(plant.name)}</h1><p>${t('bought')}: ${formatDate(plant.bought)}</p><button class="profile-qr" data-qr="${plant.id}" aria-label="${t('qr')}" title="${t('qr')}"><img src="${qrUrl(plant.id)}" alt=""><span>${t('qr')}</span></button><label class="camera-button">📷 ${t('takePhoto')}<input data-camera type="file" accept="image/*" multiple></label></div></article>${reminderHTML(plant)}<div class="client-actions"><button class="water" data-event="water">💧<span>${t('water')}</span></button><button class="feed" data-event="feed">✦<span>${t('fertilize')}</span></button></div><section class="care-info"><h2>${t('care')}</h2><div class="care-grid">${careCards(type)}</div></section>${fertilizerList(type)}${pestTable(type)}<section class="history"><h2>${t('lastCare')}</h2><ul>${events}</ul></section>${modalHTML()}`, true);
+  return shell(`<a class="back" href="#">← ${t('back')}</a><article class="profile"><div class="profile-media">${cover ? `<button class="profile-photo" data-photo="${plant.photos.length - 1}" aria-label="${t('openPhoto')}"><img src="${esc(cover)}" alt="${esc(plant.name)}"></button>` : `<div class="profile-photo">${icon}</div>`}<div class="profile-gallery"><div class="gallery-head"><span>${t('gallery')}</span><span>${plant.photos?.length || 0} 📷</span></div><div class="gallery-grid">${gallery}</div></div></div><div class="profile-title"><span class="tag">${esc(type?.name || '—')}</span><h1>${esc(plant.name)}</h1><p>${t('bought')}: ${formatDate(plant.bought)}</p><button class="profile-qr" data-qr="${plant.id}" aria-label="${t('qr')}" title="${t('qr')}"><img src="${qrUrl(plant.id)}" alt=""><span>${t('qr')}</span></button><label class="camera-button">📷 ${t('takePhoto')}<input data-camera type="file" accept="image/*" multiple></label></div></article>${reminderHTML(plant)}<div class="client-actions"><button class="water" data-event="water">💧<span>${t('water')}</span></button><button class="feed" data-event="feed">✦<span>${t('fertilize')}</span></button></div>${careCalendar(plant)}<section class="care-info"><h2>${t('care')}</h2><div class="care-grid">${careCards(type)}</div></section>${fertilizerList(type)}${pestTable(type)}${modalHTML()}`, true);
 }
 
 function modalHTML() {
@@ -234,6 +264,19 @@ function bind() {
   }
   const camera = document.querySelector('[data-camera]');
   if (camera) camera.onchange = () => uploadPhotos(camera);
+  document.querySelectorAll('.calendar-day').forEach(day => {
+    const positionPopup = () => {
+      const popup = day.querySelector('.day-popover');
+      const bounds = day.getBoundingClientRect();
+      const left = Math.min(window.innerWidth - 118, Math.max(118, bounds.left + bounds.width / 2));
+      const showBelow = bounds.top < 210;
+      popup.style.left = `${left}px`;
+      popup.style.top = showBelow ? `${bounds.bottom + 8}px` : `${bounds.top - 8}px`;
+      popup.classList.toggle('below', showBelow);
+    };
+    day.addEventListener('mouseenter', positionPopup);
+    day.addEventListener('focus', positionPopup);
+  });
 }
 
 function printLabel(event) {
